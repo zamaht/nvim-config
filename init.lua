@@ -9,7 +9,7 @@
 ========         ||                    ||   | === |          ========
 ========         ||   KICKSTART.NVIM   ||   |-----|          ========
 ========         ||                    ||   | === |          ========
-========         ||                    ||   |-----|          ========
+========        ||                    ||   |-----|          ========
 ========         ||:Tutor              ||   |:::::|          ========
 ========         |'-..................-'|   |____o|          ========
 ========         `"")----------------(""`   ___________      ========
@@ -102,7 +102,7 @@ vim.g.have_nerd_font = false
 vim.o.number = true
 -- You can also add relative line numbers, to help with jumping.
 --  Experiment for yourself to see if you like it!
--- vim.o.relativenumber = true
+vim.o.relativenumber = true
 
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.o.mouse = 'a'
@@ -151,6 +151,9 @@ vim.o.splitbelow = true
 --   and `:help lua-options-guide`
 vim.o.list = true
 vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
+vim.o.tabstop = 4
+vim.o.shiftwidth = 4
+vim.o.expandtab = true
 
 -- Preview substitutions live, as you type!
 vim.o.inccommand = 'split'
@@ -169,9 +172,16 @@ vim.o.confirm = true
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
+-- Close Nvim entirely
+vim.keymap.set('n', '<C-q>', ':qa<CR>', { desc = 'Quit neovim session with all its buffers' })
+
 -- Clear highlights on search when pressing <Esc> in normal mode
 --  See `:help hlsearch`
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
+
+-- Keymaps for NvimTree
+vim.keymap.set('n', '<C-b>', '<cmd>NvimTreeToggle<CR>', { desc = 'Toogle the VimTree Folder viewer' })
+vim.keymap.set('n', '<C-c>', '<cmd>NvimTreeFocus<CR>', { desc = 'Focus the VimTree Folder viewer' })
 
 -- Diagnostic keymaps
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
@@ -185,10 +195,10 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
 -- TIP: Disable arrow keys in normal mode
--- vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
--- vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
--- vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
--- vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
+vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
+vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
+vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
+vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
 
 -- Keybinds to make split navigation easier.
 --  Use CTRL+<hjkl> to switch between windows
@@ -207,6 +217,11 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
+vim.api.nvim_create_autocmd('VimEnter', {
+  callback = function()
+    require('nvim-tree.api').tree.open()
+  end,
+})
 
 -- Highlight when yanking (copying) text
 --  Try it with `yap` in normal mode
@@ -283,6 +298,44 @@ require('lazy').setup({
       },
     },
   },
+  {
+    'xiyaowong/transparent.nvim',
+    event = 'VimEnter',
+    opts = {
+      -- table: default groups
+      groups = {
+        'Normal',
+        'NormalNC',
+        'Comment',
+        'Constant',
+        'Special',
+        'Identifier',
+        'Statement',
+        'PreProc',
+        'Type',
+        'Underlined',
+        'Todo',
+        'String',
+        'Function',
+        'Conditional',
+        'Repeat',
+        'Operator',
+        'Structure',
+        'LineNr',
+        'NonText',
+        'SignColumn',
+        'CursorLine',
+        'CursorLineNr',
+        'StatusLine',
+        'StatusLineNC',
+        'EndOfBuffer',
+      },
+      -- table: additional groups that should be cleared
+      extra_groups = { 'Telescope', 'NormalFloat', 'NvimTreeNormal' },
+      -- table: groups you don't want to clear
+      exclude_groups = {},
+    },
+  },
 
   -- NOTE: Plugins can also be configured to run Lua code when they are loaded.
   --
@@ -349,6 +402,17 @@ require('lazy').setup({
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
       },
     },
+  },
+  {
+    'nvim-telescope/telescope-project.nvim',
+    dependencies = {
+      'nvim-telescope/telescope.nvim',
+    },
+  },
+  {
+    'nvim-tree/nvim-tree.lua',
+    opts = {},
+    event = 'VimEnter',
   },
 
   -- NOTE: Plugins can specify dependencies.
@@ -417,12 +481,14 @@ require('lazy').setup({
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
           },
+          project = {},
         },
       }
 
       -- Enable Telescope extensions if they are installed
       pcall(require('telescope').load_extension, 'fzf')
       pcall(require('telescope').load_extension, 'ui-select')
+      pcall(require('telescope').load_extension, 'project')
 
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
@@ -436,6 +502,7 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
       vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
+      vim.keymap.set('n', '<leader>p', ':Telescope project<CR>', { desc = '[P] Open projects' })
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
@@ -491,6 +558,55 @@ require('lazy').setup({
 
       -- Allows extra capabilities provided by blink.cmp
       'saghen/blink.cmp',
+      {
+        'pmizio/typescript-tools.nvim',
+        dependencies = { 'nvim-lua/plenary.nvim', 'neovim/nvim-lspconfig' },
+        opts = {
+          settings = {
+            -- spawn additional tsserver instance to calculate diagnostics on it
+            separate_diagnostic_server = true,
+            -- "change"|"insert_leave" determine when the client asks the server about diagnostic
+            publish_diagnostic_on = 'insert_leave',
+            -- array of strings("fix_all"|"add_missing_imports"|"remove_unused"|
+            -- "remove_unused_imports"|"organize_imports") -- or string "all"
+            -- to include all supported code actions
+            -- specify commands exposed as code_actions
+            expose_as_code_action = {},
+            -- string|nil - specify a custom path to `tsserver.js` file, if this is nil or file under path
+            -- not exists then standard path resolution strategy is applied
+            tsserver_path = nil,
+            -- specify a list of plugins to load by tsserver, e.g., for support `styled-components`
+            -- (see 💅 `styled-components` support section)
+            tsserver_plugins = {},
+            -- this value is passed to: https://nodejs.org/api/cli.html#--max-old-space-sizesize-in-megabytes
+            -- memory limit in megabytes or "auto"(basically no limit)
+            tsserver_max_memory = 'auto',
+            -- described below
+            tsserver_format_options = {},
+            tsserver_file_preferences = {},
+            -- locale of all tsserver messages, supported locales you can find here:
+            -- https://github.com/microsoft/TypeScript/blob/3c221fc086be52b19801f6e8d82596d04607ede6/src/compiler/utilitiesPublic.ts#L620
+            tsserver_locale = 'en',
+            -- mirror of VSCode's `typescript.suggest.completeFunctionCalls`
+            complete_function_calls = false,
+            include_completions_with_insert_text = true,
+            -- CodeLens
+            -- WARNING: Experimental feature also in VSCode, because it might hit performance of server.
+            -- possible values: ("off"|"all"|"implementations_only"|"references_only")
+            code_lens = 'all',
+            -- by default code lenses are displayed on all referencable values and for some of you it can
+            -- be too much this option reduce count of them by removing member references from lenses
+            disable_member_code_lens = true,
+            -- JSXCloseTag
+            -- WARNING: it is disabled by default (maybe you configuration or distro already uses nvim-ts-autotag,
+            -- that maybe have a conflict if enable this feature. )
+            jsx_close_tag = {
+              enable = false,
+              filetypes = { 'javascriptreact', 'typescriptreact' },
+            },
+          },
+        },
+      },
     },
     config = function()
       -- Brief aside: **What is LSP?**
@@ -698,6 +814,7 @@ require('lazy').setup({
             },
           },
         },
+        biome = {},
       }
 
       -- Ensure the servers and tools above are installed
@@ -716,6 +833,7 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
+        'biome', -- Used for Json, JS, TS
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -768,6 +886,10 @@ require('lazy').setup({
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
+        javascript = { 'biome' },
+        typescript = { 'biome' },
+        css = { 'biome' },
+        json = { 'biome' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
@@ -835,7 +957,34 @@ require('lazy').setup({
         -- <c-k>: Toggle signature help
         --
         -- See :h blink-cmp-config-keymap for defining your own keymap
-        preset = 'default',
+
+        -- Enter preset:
+        -- ['<C-space>'] = { 'show', 'show_documentation', 'hide_documentation' },
+        -- ['<C-e>'] = { 'hide', 'fallback' },
+        -- ['<CR>'] = { 'accept', 'fallback' },
+        --
+        -- ['<Tab>'] = { 'snippet_forward', 'fallback' },
+        -- ['<S-Tab>'] = { 'snippet_backward', 'fallback' },
+        --
+        -- ['<Up>'] = { 'select_prev', 'fallback' },
+        -- ['<Down>'] = { 'select_next', 'fallback' },
+        -- ['<C-p>'] = { 'select_prev', 'fallback_to_mappings' },
+        -- ['<C-n>'] = { 'select_next', 'fallback_to_mappings' },
+        --
+        -- ['<C-b>'] = { 'scroll_documentation_up', 'fallback' },
+        -- ['<C-f>'] = { 'scroll_documentation_down', 'fallback' },
+        --
+        -- ['<C-k>'] = { 'show_signature', 'hide_signature', 'fallback' },
+        preset = 'enter',
+        ['<C-space>'] = {
+          function(cmp)
+            cmp.show { providers = { 'snippets' } }
+          end,
+        },
+        ['<Tab>'] = { 'select_next', 'fallback' },
+        ['<S-Tab>'] = { 'select_prev', 'fallback' },
+        ['<Up>'] = { 'snippet_forward', 'fallback' },
+        ['<Down>'] = { 'snippet_backward', 'fallback' },
 
         -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
         --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -881,20 +1030,24 @@ require('lazy').setup({
     -- change the command in the config to whatever the name of that colorscheme is.
     --
     -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    'folke/tokyonight.nvim',
+    'marko-cerovac/material.nvim',
     priority = 1000, -- Make sure to load this before all the other start plugins.
     config = function()
       ---@diagnostic disable-next-line: missing-fields
-      require('tokyonight').setup {
+      require('material').setup {
         styles = {
           comments = { italic = false }, -- Disable italics in comments
+          strings = { bold = true },
+        },
+        disable = {
+          background = true,
         },
       }
 
       -- Load the colorscheme here.
       -- Like many other themes, this one has different styles, and you could load
       -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'tokyonight-night'
+      vim.cmd 'colorscheme material-palenight'
     end,
   },
 
@@ -990,6 +1143,14 @@ require('lazy').setup({
   -- Or use telescope!
   -- In normal mode type `<space>sh` then write `lazy.nvim-plugin`
   -- you can continue same window with `<space>sr` which resumes last telescope search
+  {
+    'pmizio/typescript-tools.nvim',
+    dependencies = { 'nvim-lua/plenary.nvim', 'neovim/nvim-lspconfig' },
+    opts = {},
+  },
+  {
+    'natecraddock/workspaces.nvim',
+  },
 }, {
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
