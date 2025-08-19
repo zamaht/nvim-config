@@ -976,11 +976,7 @@ require('lazy').setup({
         --
         -- ['<C-k>'] = { 'show_signature', 'hide_signature', 'fallback' },
         preset = 'enter',
-        ['<C-space>'] = {
-          function(cmp)
-            cmp.show { providers = { 'snippets' } }
-          end,
-        },
+        ['<C-space>'] = { 'show', 'show_documentation', 'hide_documentation' },
         ['<Tab>'] = { 'select_next', 'fallback' },
         ['<S-Tab>'] = { 'select_prev', 'fallback' },
         ['<Up>'] = { 'snippet_forward', 'fallback' },
